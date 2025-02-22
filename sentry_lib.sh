@@ -39,9 +39,11 @@ generate_uuid () {
   else
     # craft a UUID using bash methods: 8-4-4-4-12
     printf "%s-%s-%s-%s-%s" \
-      $(openssl rand -hex 4) $(openssl rand -hex 2) \
-      $(openssl rand -hex 2) $(openssl rand -hex 2) \
-      $(openssl rand -hex 6)
+      $(cat /dev/urandom | tr -cd 'a-f0-9' | head -c 8) \
+      $(cat /dev/urandom | tr -cd 'a-f0-9' | head -c 4) \
+      $(cat /dev/urandom | tr -cd 'a-f0-9' | head -c 4) \
+      $(cat /dev/urandom | tr -cd 'a-f0-9' | head -c 4) \
+      $(cat /dev/urandom | tr -cd 'a-f0-9' | head -c 12)
   fi
 }
 
