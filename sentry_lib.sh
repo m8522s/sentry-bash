@@ -1,5 +1,5 @@
 #!/bin/bash
-# Communicate with Sentry using API and methods from the Bash
+# Communicate with Sentry using API and Bash methods
 
 # Use Sentry.io for error reporting:
 #   source /usr/lib64/sentry_lib.sh
@@ -9,8 +9,13 @@
 
 
 # sentry_init(API key, project ID, server name)
-# Prepare access to the Sentry API using an API key and a project number.
+# Prepare to access the Sentry API using an API key and a project number.
 # The server name is optional and defaults to 'sentry.io'.
+#
+# Example Data Source Name (DSN):
+# https://419595dd76021@o4506231.ingest.us.sentry.io/4508864683371
+#         ^^^^^^^^^^^^^                              ^^^^^^^^^^^^^
+#          public key                                 project ID
 sentry_init () {
   _SENTRY_KEY=$1
   _SENTRY_PROJECT=$2
@@ -24,7 +29,7 @@ sentry_init () {
 
 
 # generate_uuid()
-# Generate a UUID using the OS method or alternatively a random string.
+# Generate a UUID using the OS method, or alternatively a random string.
 # Debian uses "uuid" while Red Hat uses "uuidgen"
 generate_uuid () {
   if command -v uuid >/dev/null 2>&1 ; then
@@ -43,7 +48,7 @@ generate_uuid () {
 
 # sentry_message(title, message)
 # Report a message to Sentry. The title is mandatory. Message and severity
-# are optional. Severity may be: fatal, error, warning, info, and debug
+# are optional. Severity can be: fatal, error, warning, info, and debug
 sentry_message () {
   [ -z "${1}" ] && return 1
   title=$1
