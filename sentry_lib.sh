@@ -15,7 +15,7 @@
 # Example Data Source Name (DSN):
 # https://419595dd76021@o4506231.ingest.us.sentry.io/4508864683371
 #         ^^^^^^^^^^^^^                              ^^^^^^^^^^^^^
-#          public key                                 project ID
+#             key                                     project ID
 sentry_init () {
   _SENTRY_KEY=$1
   _SENTRY_PROJECT=$2
@@ -56,6 +56,7 @@ sentry_message () {
   title=$1
   message=$2
   severity=$3
+  curl_opts=''
 
   # The Sentry server expects an API key and a project number
   if [ -z "${_SENTRY_KEY}" -o -z "${_SENTRY_PROJECT}" ]; then
@@ -68,6 +69,12 @@ sentry_message () {
   # The default value for level/severity is 'info'
   if [ -z "${severity}" ] ; then
     severity='info'
+  fi
+  
+  # Define variable _SENTRY_NO_CERTIFICATE_CHECK to ignore the
+  # server's TLS certificate.
+  if [ ! -z ${_SENTRY_NO_CERTIFICATE_CHECK+1} ] ; then
+    curl_opts=--insecure
   fi
 
   # Contact Sentry API and submit the message
@@ -92,6 +99,7 @@ sentry_message () {
       \"sys.argv\": \"$SCRIPT_ARGUMENTS\"
     }
   }" \
+  $curl_opts \
   --header 'Content-Type: application/json' \
   --header "X-Sentry-Auth: Sentry sentry_version=7, sentry_key=$_SENTRY_KEY, sentry_client=zenithal-bash/0.1" \
   https://$_SENTRY_HOST/api/$_SENTRY_PROJECT/store/
