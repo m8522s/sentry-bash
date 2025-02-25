@@ -1,1 +1,1 @@
-# Inofficial Sentry SDKs for Bash
+# Inofficial Sentry SDK for Bash
