@@ -28,21 +28,6 @@ sentry_init () {
 }
 
 
-# generate_uuid()
-# Generate a UUID using the OS method, or alternatively a random string.
-# Debian uses "uuid" while Red Hat uses "uuidgen"
-generate_uuid () {
-  if command -v uuid >/dev/null 2>&1 ; then
-    echo "$(uuid)"
-  elif command -v uuidgen >/dev/null 2>&1 ; then
-    echo "$(uuidgen)"
-  else
-    # Generate a UUID using bash methods
-    printf "%s" $(cat /dev/urandom | tr -cd 'a-f0-9' | head -c 32)
-  fi
-}
-
-
 # sentry_message(title, message, severity)
 # Report a message to Sentry. The title is mandatory. Message and severity
 # are optional. Severity can be: fatal, error, warning, info, and debug
@@ -54,21 +39,21 @@ sentry_message () {
   curl_opts=''
 
   # The Sentry server expects an API key and a project number
-  if [ -z "${_SENTRY_KEY}" -o -z "${_SENTRY_PROJECT}" ]; then
+  if [ -z "${_SENTRY_KEY}" ] || [ -z "${_SENTRY_PROJECT}" ]; then
     echo "Error: Sentry key or project missing. Run sentry_init() first."
     return 1
   fi
-  event_id="$(generate_uuid)"
+  event_id=$(tr -cd 'a-f0-9' < /dev/urandom | head -c 32)
   event_timestamp=$(date --utc +"%Y-%m-%dT%H:%M:%S")
 
   # The default value for level/severity is 'info'
   if [ -z "${severity}" ] ; then
     severity='info'
   fi
-  
+
   # Define variable _SENTRY_NO_CERTIFICATE_CHECK to ignore the
   # server's TLS certificate.
-  if [ ! -z ${_SENTRY_NO_CERTIFICATE_CHECK+1} ] ; then
+  if [ -n "${_SENTRY_NO_CERTIFICATE_CHECK+1}" ] ; then
     curl_opts=--insecure
   fi
 
@@ -82,8 +67,8 @@ sentry_message () {
     \"platform\": \"$(cat /etc/redhat-release /etc/debian_version 2>/dev/null)\",
     \"tags\": {
       \"shell\": \"$SHELL\",
-      \"server_name\": \"`hostname`\",
-      \"path\": \"`pwd`\"
+      \"server_name\": \"$(hostname)\",
+      \"path\": \"$(pwd)\"
     },
     \"exception\": [{
       \"type\": \"$title\",
@@ -96,6 +81,6 @@ sentry_message () {
   }" \
   $curl_opts \
   --header 'Content-Type: application/json' \
-  --header "X-Sentry-Auth: Sentry sentry_version=7, sentry_key=$_SENTRY_KEY, sentry_client=zenithal-bash/0.1" \
-  https://$_SENTRY_HOST/api/$_SENTRY_PROJECT/store/
+  --header "X-Sentry-Auth: Sentry sentry_version=7, sentry_key=$_SENTRY_KEY, sentry_client=zenithal-bash/0.2" \
+  https://"$_SENTRY_HOST"/api/"$_SENTRY_PROJECT"/store/
 }
