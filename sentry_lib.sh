@@ -5,7 +5,7 @@
 #   source /usr/lib64/sentry_lib.sh
 #   sentry_init 83105fca2e2e2351b01 4508410146651  (sentry.io)
 #   sentry_init 8f7152da911 1 bugsink.example.net  (bugsink)
-#   sentry_message "Exception" "failed to read mutex"
+#   sentry_message "Exception" "failed to read mutex" "error"
 
 
 # sentry_init(API key, project ID, server name)
@@ -48,7 +48,7 @@ generate_uuid () {
 }
 
 
-# sentry_message(title, message)
+# sentry_message(title, message, severity)
 # Report a message to Sentry. The title is mandatory. Message and severity
 # are optional. Severity can be: fatal, error, warning, info, and debug
 sentry_message () {
