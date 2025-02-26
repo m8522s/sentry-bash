@@ -8,6 +8,10 @@
 #   sentry_message "Exception" "failed to read mutex" "error"
 
 
+# Automatic reporting in case of script failure
+trap sentry_trap_err ERR
+
+
 # sentry_init(API key, project ID, server name)
 # Prepare to access the Sentry API using an API key and a project number.
 # The server name is optional and defaults to 'sentry.io'.
@@ -25,6 +29,13 @@ sentry_init () {
   else
     _SENTRY_HOST=$3
   fi
+}
+
+
+# sentry_trap_err()
+# Send a message to Sentry reporting the failed command.
+sentry_trap_err () {
+  sentry_message "Bash exit" "Error on line ${LINENO}: ${BASH_COMMAND}" "error"
 }
 
 

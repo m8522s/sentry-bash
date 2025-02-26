@@ -1,3 +1,7 @@
+## [0.3] (future release)
+* automated testing with BATS
+* send Sentry message on bash exit
+
 ## [0.2] (future release)
 * accept self-signed certificates
 * code validated with shellcheck
