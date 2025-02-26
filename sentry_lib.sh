@@ -37,13 +37,8 @@ generate_uuid () {
   elif command -v uuidgen >/dev/null 2>&1 ; then
     echo "$(uuidgen)"
   else
-    # craft a UUID using bash methods: 8-4-4-4-12
-    printf "%s-%s-%s-%s-%s" \
-      $(cat /dev/urandom | tr -cd 'a-f0-9' | head -c 8) \
-      $(cat /dev/urandom | tr -cd 'a-f0-9' | head -c 4) \
-      $(cat /dev/urandom | tr -cd 'a-f0-9' | head -c 4) \
-      $(cat /dev/urandom | tr -cd 'a-f0-9' | head -c 4) \
-      $(cat /dev/urandom | tr -cd 'a-f0-9' | head -c 12)
+    # Generate a UUID using bash methods
+    printf "%s" $(cat /dev/urandom | tr -cd 'a-f0-9' | head -c 32)
   fi
 }
 
@@ -63,7 +58,7 @@ sentry_message () {
     echo "Error: Sentry key or project missing. Run sentry_init() first."
     return 1
   fi
-  event_id="$(uuidgen)"
+  event_id="$(generate_uuid)"
   event_timestamp=$(date --utc +"%Y-%m-%dT%H:%M:%S")
 
   # The default value for level/severity is 'info'
