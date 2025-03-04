@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Use Sentry.io for error reporting:
 #   source /usr/lib64/sentry_sdk.sh
 #   sentry_init 83105fca2e2e2351b01 4508410146651  (sentry.io)
@@ -49,9 +51,8 @@ sentry_exception() {
 # is optional. Severity can be: fatal, error, warning, info, and debug
 sentry_event () {
   [ -z "${1}" ] && return 1
-  title=$1
-  message=$2
-  severity=$3
+  message=$1
+  severity=$2
   curl_opts=''
 
   # The Sentry server expects an API key and a project number
@@ -119,11 +120,6 @@ sentry_event () {
     \"type\": \"event\",
     \"length\": $length
   }"
-  # https://develop.sentry.dev/sdk/data-model/event-payloads/
-
-  # Format output for debugging or development
-  echo $item
-  printf "%s %s %s" $envelope $payload $item | jq
 
   # Format data for Sentry's envelope. Concatenate envelope payload and item
   # while preserving whitespace and newline
@@ -144,6 +140,5 @@ EOF
       https://"$_SENTRY_HOST"/api/"$_SENTRY_PROJECT"/envelope/
   else
     echo "Error: Invalid JSON format"
-    exit 1
   fi
 }
