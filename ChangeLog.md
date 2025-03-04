@@ -1,6 +1,3 @@
-## [0.4] (future release)
-* switch API entpoint from /store to /envelope
-
 ## [0.3] (future release)
 * automated testing with BATS
 * send Sentry message on bash exit
