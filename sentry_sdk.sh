@@ -1,5 +1,5 @@
 # Use Sentry.io for error reporting:
-#   source /usr/lib64/sentry_lib.sh
+#   source /usr/lib64/sentry_sdk.sh
 #   sentry_init 83105fca2e2e2351b01 4508410146651  (sentry.io)
 #   sentry_init 8f7152da911 1 bugsink.example.net  (bugsink)
 #   sentry_event "failed to read mutex" "error"

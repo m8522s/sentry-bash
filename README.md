@@ -8,7 +8,7 @@ Welcome to the inofficial Bash SDK for **[Sentry](http://sentry.io/)**!
 
 ```bash
 git clone https://github.com/m8522s/sentry-bash.git
-mv sentry-bash/sentry_lib.sh /usr/lib64/
+mv sentry-bash/sentry_sdk.sh /usr/lib64/
 rm -rf sentry-bash/
 ```
 
@@ -18,7 +18,7 @@ rm -rf sentry-bash/
 Load the Sentry library and initialize with your personal key and the project number.
 
 ```bash
-source /usr/lib64/sentry_lib.sh
+source /usr/lib64/sentry_sdk.sh
 sentry_init 83105fca2e2e2351b01 4508410146651
 ```
 
