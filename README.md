@@ -28,5 +28,5 @@ sentry_init 83105fca2e2e2351b01 4508410146651
 Generate a message that will show up in Sentry.
 
 ```bash
-sentry_message "Exception" "Oops, something went wrong!" "error"
+sentry_event "Oops, something went wrong!" "error"
 ```

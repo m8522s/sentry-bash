@@ -1,10 +1,8 @@
-#!/bin/bash
-# Communicate with Sentry using API and Bash methods
-
 # Use Sentry.io for error reporting:
 #   source /usr/lib64/sentry_lib.sh
 #   sentry_init 83105fca2e2e2351b01 4508410146651  (sentry.io)
 #   sentry_init 8f7152da911 1 bugsink.example.net  (bugsink)
+#   sentry_event "failed to read mutex" "error"
 #   sentry_message "Exception" "failed to read mutex" "error"
 
 
@@ -35,14 +33,21 @@ sentry_init () {
 # sentry_trap_err()
 # Send a message to Sentry reporting the failed command.
 sentry_trap_err () {
-  sentry_message "Bash exit" "Error on line ${LINENO}: ${BASH_COMMAND}" "error"
+  sentry_exception "Bash exit" "Error on line ${LINENO}: ${BASH_COMMAND}" "error"
 }
 
 
-# sentry_message(title, message, severity)
-# Report a message to Sentry. The title is mandatory. Message and severity
-# are optional. Severity can be: fatal, error, warning, info, and debug
-sentry_message () {
+# sentry_exception(title, message, severity)
+# https://develop.sentry.dev/sdk/data-model/event-payloads/exception/
+sentry_exception() {
+  true
+}
+
+
+# sentry_event(message, severity)
+# Report an event to Sentry. The message is mandatory, and the severity
+# is optional. Severity can be: fatal, error, warning, info, and debug
+sentry_event () {
   [ -z "${1}" ] && return 1
   title=$1
   message=$2
@@ -55,7 +60,7 @@ sentry_message () {
     return 1
   fi
   event_id=$(tr -cd 'a-f0-9' < /dev/urandom | head -c 32)
-  event_timestamp=$(date --utc +"%Y-%m-%dT%H:%M:%S")
+  event_timestamp=$(date --utc +"%Y-%m-%dT%H:%M:%SZ")
 
   # The default value for level/severity is 'info'
   if [ -z "${severity}" ] ; then
@@ -68,30 +73,77 @@ sentry_message () {
     curl_opts=--insecure
   fi
 
-  # Contact Sentry API and submit the message
-  curl --data "{
-    \"event_id\": \"$event_id\",
-    \"message\": \"$message\",
-    \"timestamp\": \"$event_timestamp\",
-    \"level\": \"$severity\",
-    \"environment\": \"production\",
-    \"platform\": \"$(cat /etc/redhat-release /etc/debian_version 2>/dev/null)\",
-    \"tags\": {
-      \"shell\": \"$SHELL\",
-      \"server_name\": \"$(hostname)\",
-      \"path\": \"$(pwd)\"
+  envelope='{
+    "event_id": "'"$event_id"'"
+  }'
+
+  # The message must not have whitespace, or Sentry will reject it
+  item='{
+    "event_id": "'"$event_id"'",
+    "platform": "native",
+    "logentry": {
+      "message": "'"$message"'"
     },
-    \"exception\": [{
-      \"type\": \"$title\",
-      \"value\": \"$message\",
-      \"module\": \"__builtins__\"
-    }],
-    \"extra\": {
-      \"sys.argv\": \"$SCRIPT_ARGUMENTS\"
+    "timestamp": "'"$event_timestamp"'",
+    "server_name": "'"${HOSTNAME}"'",
+    "environment": "production",
+    "level": "'"$severity"'",
+    "contexts": {
+      "device": {
+        "type": "device",
+        "arch": "'"$(uname --machine)"'"
+      },
+      "os": {
+        "type": "os",
+        "name": "'"$(uname)"'",
+        "version": "'"$(uname --kernel-release)"'",
+        "kernel_version": "'"$(uname --kernel-version)"'"
+      }
+    },
+    "extra": {
+      "environ": '$(jc --raw printenv)'
+    },
+    "sdk": {
+      "name": "sentry-bash",
+      "version": "0.2"
     }
-  }" \
-  $curl_opts \
-  --header 'Content-Type: application/json' \
-  --header "X-Sentry-Auth: Sentry sentry_version=7, sentry_key=$_SENTRY_KEY, sentry_client=zenithal-bash/0.2" \
-  https://"$_SENTRY_HOST"/api/"$_SENTRY_PROJECT"/store/
+  }'
+
+  # Count the length of the item variable. Do not include whitespace, so {#item}
+  # won't work here. Count characters with wc and reduce by one to ignore the
+  # trailing newline
+  length=$(echo $item | jq --compact-output | wc --chars)
+  ((length--))
+
+  payload="{
+    \"type\": \"event\",
+    \"length\": $length
+  }"
+  # https://develop.sentry.dev/sdk/data-model/event-payloads/
+
+  # Format output for debugging or development
+  echo $item
+  printf "%s %s %s" $envelope $payload $item | jq
+
+  # Format data for Sentry's envelope. Concatenate envelope payload and item
+  # while preserving whitespace and newline
+  data=$(cat <<EOF
+$(echo $envelope | jq --compact-output)
+$(echo $payload | jq --compact-output)
+$(echo $item | jq --compact-output)
+EOF
+)
+
+  # Check for valid JSON format
+  if (( $length > 0 )) ; then
+
+    # Contact Sentry API and submit the message
+    curl --silent --json "$data" \
+      $curl_opts \
+      --header "X-Sentry-Auth: Sentry sentry_version=7, sentry_key=$_SENTRY_KEY, sentry_client=zenithal-bash/0.2" \
+      https://"$_SENTRY_HOST"/api/"$_SENTRY_PROJECT"/envelope/
+  else
+    echo "Error: Invalid JSON format"
+    exit 1
+  fi
 }
