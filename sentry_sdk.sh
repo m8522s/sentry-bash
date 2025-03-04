@@ -110,28 +110,29 @@ sentry_event () {
     }
   }'
 
-  # Count the length of the item variable. Do not include whitespace, so {#item}
-  # won't work here. Count characters with wc and reduce by one to ignore the
-  # trailing newline
-  length=$(echo $item | jq --compact-output | wc --chars)
+  # Count the length of the item variable. Do not include whitespace,
+  # so {#item} won't work here. Count characters with wc and reduce by 
+  # one to ignore the trailing newline.
+  length=$(echo "${item}" | jq --compact-output | wc --chars)
   ((length--))
 
   payload="{
     \"type\": \"event\",
     \"length\": $length
   }"
+  # https://develop.sentry.dev/sdk/data-model/event-payloads/
 
-  # Format data for Sentry's envelope. Concatenate envelope payload and item
-  # while preserving whitespace and newline
+  # Format data for Sentry's envelope. Concatenate envelope payload and
+  # item while preserving whitespace and newline.
   data=$(cat <<EOF
-$(echo $envelope | jq --compact-output)
-$(echo $payload | jq --compact-output)
-$(echo $item | jq --compact-output)
+$(echo "${envelope}" | jq --compact-output)
+$(echo "${payload}" | jq --compact-output)
+$(echo "${item}" | jq --compact-output)
 EOF
 )
 
   # Check for valid JSON format
-  if (( $length > 0 )) ; then
+  if (( "${length}" > 0 )) ; then
 
     # Contact Sentry API and submit the message
     curl --silent --json "$data" \

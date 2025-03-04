@@ -19,7 +19,7 @@ Load the Sentry library and initialize with your personal key and the project nu
 
 ```bash
 source /usr/lib64/sentry_sdk.sh
-sentry_init 83105fca2e2e2351b01 4508410146651
+sentry_init 83105fca2e2e2351b1 450841014661
 ```
 
 
