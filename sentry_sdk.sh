@@ -23,6 +23,7 @@ trap sentry_trap_err ERR
 sentry_init () {
   _SENTRY_KEY=$1
   _SENTRY_PROJECT=$2
+  _SENTRY_BREADCRUMBS=()
 
   if [ -z "${3}" ] ; then
     _SENTRY_HOST=sentry.io
@@ -43,6 +44,18 @@ sentry_trap_err () {
 # https://develop.sentry.dev/sdk/data-model/event-payloads/exception/
 sentry_exception() {
   true
+}
+
+
+# sentry_breadcrumb(message)
+sentry_breadcrumb() {
+  message=$1
+
+  if [ -z "${_SENTRY_BREADCRUMBS}" ] ; then
+    _SENTRY_BREADCRUMBS="$message"
+  else
+    _SENTRY_BREADCRUMBS="$_SENTRY_BREADCRUMBS:$message"
+  fi
 }
 
 
@@ -73,6 +86,28 @@ sentry_event () {
   if [ -n "${_SENTRY_NO_CERTIFICATE_CHECK+1}" ] ; then
     curl_opts=--insecure
   fi
+
+  # Breadcrumbs
+  # https://develop.sentry.dev/sdk/data-model/event-payloads/breadcrumbs/
+  if [ -n "${_SENTRY_BREADCRUMBS}" ] ; then
+    breadcrumb='{"breadcrumbs":['
+    IFS=$':'
+    for single in $_SENTRY_BREADCRUMBS; do
+      breadcrumb+='{
+        "timestamp": "'"$event_timestamp"'",
+        "message": "'"$single"'"
+      },'
+    done
+    unset IFS
+
+    # Remove trailing comma for valid JSON syntax
+    breadcrumb="${breadcrumb::-1}"
+
+    breadcumb+=']},'
+    #echo $breadcumb
+    #echo $breadcumb | jq
+  fi
+
 
   envelope='{
     "event_id": "'"$event_id"'"
@@ -111,7 +146,7 @@ sentry_event () {
   }'
 
   # Count the length of the item variable. Do not include whitespace,
-  # so {#item} won't work here. Count characters with wc and reduce by 
+  # so {#item} won't work here. Count characters with wc and reduce by
   # one to ignore the trailing newline.
   length=$(echo "${item}" | jq --compact-output | wc --chars)
   ((length--))
