@@ -4,6 +4,7 @@
 ## [0.3] (future release)
 * send Sentry message on bash exit
 * use `libjson-sh` as JSON library
+* remove dependency from `jc`
 
 ## [0.2] - 2025-03-04
 * accept self-signed certificates
