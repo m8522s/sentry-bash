@@ -71,7 +71,7 @@ sentry_breadcrumb() {
   fi
 
   json_add_object
-  json_add_string "timestamp" $(date --utc +"%Y-%m-%dT%H:%M:%SZ")
+  json_add_string "timestamp" "$(date --utc +'%Y-%m-%dT%H:%M:%SZ')"
   json_add_string "message" "${message}"
   json_add_string "category" "${category}"
   json_close_object
@@ -110,7 +110,6 @@ sentry_event () {
   # https://develop.sentry.dev/sdk/data-model/event-payloads/breadcrumbs/
   breadcrumbs=$(json_dump)
   breadcrumbs+=,
-  echo $breadcrumbs | jq
   json_cleanup
   # TODO: remove outer {}
 
