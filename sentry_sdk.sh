@@ -4,8 +4,13 @@
 #   source /usr/lib64/sentry_sdk.sh
 #   sentry_init 83105fca2e2e2351b01 4508410146651  (sentry.io)
 #   sentry_init 8f7152da911 1 bugsink.example.net  (bugsink)
+#   sentry_breadcrumb "mutex 11Ti08"
 #   sentry_event "failed to read mutex" "error"
 #   sentry_message "Exception" "failed to read mutex" "error"
+
+source /usr/lib64/jshn.sh
+# TODO: error handling
+# wget --output-document=/usr/lib64/jshn.sh https://raw.githubusercontent.com/jeganathgt/libjson-sh/refs/heads/dev/include/jshn.sh
 
 
 # Automatic reporting in case of script failure
@@ -23,7 +28,6 @@ trap sentry_trap_err ERR
 sentry_init () {
   _SENTRY_KEY=$1
   _SENTRY_PROJECT=$2
-  _SENTRY_BREADCRUMBS=()
 
   if [ -z "${3}" ] ; then
     _SENTRY_HOST=sentry.io
@@ -47,15 +51,30 @@ sentry_exception() {
 }
 
 
-# sentry_breadcrumb(message)
+# sentry_breadcrumb(message, category)
+# Enright the next message/event with additional information (breadcrumbs).
+# Message is mandatory, category is optional and defaults to 'log'.
 sentry_breadcrumb() {
   message=$1
+  category=$2
 
-  if [ -z "${_SENTRY_BREADCRUMBS}" ] ; then
-    _SENTRY_BREADCRUMBS="$message"
-  else
-    _SENTRY_BREADCRUMBS="$_SENTRY_BREADCRUMBS:$message"
+  # The default category is 'log'
+  if [ -z "${category}" ] ; then
+    category='log'
   fi
+
+  # First call to this function? The JSON object does not exists yet
+  if [ -z "${JSON_CURSOR}" ] ; then
+    json_init "object"
+    json_add_object "breadcrumbs"
+    json_add_array "values"
+  fi
+
+  json_add_object
+  json_add_string "timestamp" $(date --utc +"%Y-%m-%dT%H:%M:%SZ")
+  json_add_string "message" "${message}"
+  json_add_string "category" "${category}"
+  json_close_object
 }
 
 
@@ -89,24 +108,11 @@ sentry_event () {
 
   # Breadcrumbs
   # https://develop.sentry.dev/sdk/data-model/event-payloads/breadcrumbs/
-  if [ -n "${_SENTRY_BREADCRUMBS}" ] ; then
-    breadcrumb='{"breadcrumbs":['
-    IFS=$':'
-    for single in $_SENTRY_BREADCRUMBS; do
-      breadcrumb+='{
-        "timestamp": "'"$event_timestamp"'",
-        "message": "'"$single"'"
-      },'
-    done
-    unset IFS
-
-    # Remove trailing comma for valid JSON syntax
-    breadcrumb="${breadcrumb::-1}"
-
-    breadcumb+=']},'
-    #echo $breadcumb
-    #echo $breadcumb | jq
-  fi
+  breadcrumbs=$(json_dump)
+  breadcrumbs+=,
+  echo $breadcrumbs | jq
+  json_cleanup
+  # TODO: remove outer {}
 
 
   envelope='{

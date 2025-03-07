@@ -1,6 +1,9 @@
-## [0.3] (future release)
+## [0.4] (future release)
 * automated testing with BATS
+
+## [0.3] (future release)
 * send Sentry message on bash exit
+* use `libjson-sh` as JSON library
 
 ## [0.2] - 2025-03-04
 * accept self-signed certificates
