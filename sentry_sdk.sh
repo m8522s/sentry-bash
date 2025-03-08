@@ -8,10 +8,12 @@
 #   sentry_event "failed to read mutex" "error"
 #   sentry_message "Exception" "failed to read mutex" "error"
 
-source /usr/lib64/jshn.sh
-# TODO: error handling
-# wget --output-document=/usr/lib64/jshn.sh https://raw.githubusercontent.com/jeganathgt/libjson-sh/refs/heads/dev/include/jshn.sh
 
+# Load JSON library
+if ! source /usr/lib64/jshn.sh ; then
+  echo "JSON library missing. Install with:"
+  echo "wget --output-document=/usr/lib64/jshn.sh https://raw.githubusercontent.com/jeganathgt/libjson-sh/refs/heads/dev/include/jshn.sh"
+fi
 
 # Automatic reporting in case of script failure
 trap sentry_trap_err ERR
