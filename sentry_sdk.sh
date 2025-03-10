@@ -80,6 +80,30 @@ sentry_breadcrumb() {
 }
 
 
+_sentry_environment_variables() {
+  # Initialize JSON object
+  json_init "object"
+  json_add_object "environ"
+
+  for envvar in $(compgen -e) ; do
+    if    [ "${envvar:0:5}" == "JSON_" ] || [ "${envvar:0:5}" == "KEYS_" ] \
+       || [ "${envvar:0:5}" == "TYPE_" ] || [ "${envvar:0:5}" == "BASH_" ] \
+       || [ "${envvar:0:4}" == "KEY_" ]  || [ "${envvar:0:6}" == "VALUE_" ] \
+       || [ "$envvar" == "LS_COLORS" ] ; then
+      continue
+    else
+      json_add_string "$envvar" "${!envvar}"
+    fi
+  done
+
+  json_close_object
+  json_close_array
+  json_env=$(json_dump)
+  json_cleanup
+  echo "${json_env}"
+}
+
+
 # sentry_event(message, severity)
 # Report an event to Sentry. The message is mandatory, and the severity
 # is optional. Severity can be: fatal, error, warning, info, and debug
@@ -111,9 +135,13 @@ sentry_event () {
   # Breadcrumbs
   # https://develop.sentry.dev/sdk/data-model/event-payloads/breadcrumbs/
   breadcrumbs=$(json_dump)
-  breadcrumbs+=,
   json_cleanup
-  # TODO: remove outer {}
+  if [ -n "${breadcrumbs}" ] ; then
+    # The breadcumbs will join the $item variable, so the JSON construct must
+    # loose the outer brackets and append a comma.
+    breadcrumbs="${breadcrumbs:1:${#breadcrumbs}-2}"
+    breadcrumbs+=','
+  fi
 
 
   envelope='{
@@ -143,9 +171,8 @@ sentry_event () {
         "kernel_version": "'"$(uname --kernel-version)"'"
       }
     },
-    "extra": {
-      "environ": '$(jc --raw printenv)'
-    },
+    '$breadcrumbs'
+    "extra": '$(_sentry_environment_variables)',
     "sdk": {
       "name": "sentry-bash",
       "version": "0.2"
@@ -177,7 +204,7 @@ EOF
   if (( "${length}" > 0 )) ; then
 
     # Contact Sentry API and submit the message
-    curl --silent --json "$data" \
+    curl --silent --data "$data" \
       $curl_opts \
       --header "X-Sentry-Auth: Sentry sentry_version=7, sentry_key=$_SENTRY_KEY, sentry_client=zenithal-bash/0.2" \
       https://"$_SENTRY_HOST"/api/"$_SENTRY_PROJECT"/envelope/
