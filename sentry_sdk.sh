@@ -49,7 +49,12 @@ sentry_trap_err () {
 # sentry_exception(title, message, severity)
 # https://develop.sentry.dev/sdk/data-model/event-payloads/exception/
 sentry_exception() {
-  true
+  #title=$1
+  message=$2
+  severity=$3
+
+  # Workaround: relay to sentry_event
+  sentry_event "${message}" "${severity}"
 }
 
 
