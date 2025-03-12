@@ -109,6 +109,16 @@ _sentry_environment_variables() {
 }
 
 
+# sentry_message(title, message, severity)
+# Relay to sentry_event().
+sentry_message () {
+  title=$1
+  message=$2
+  severity=$3
+  sentry_event "${message}" "${severity}"
+}
+
+
 # sentry_event(message, severity)
 # Report an event to Sentry. The message is mandatory, and the severity
 # is optional. Severity can be: fatal, error, warning, info, and debug
