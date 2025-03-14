@@ -141,6 +141,13 @@ sentry_event () {
     severity='info'
   fi
 
+  # Find the Git hash
+  if git rev-parse HEAD 2>/dev/null ; then
+    revision="Git hash: " + $(git rev-parse HEAD)
+  else
+    revision='unknown'
+  fi
+
   # Define variable _SENTRY_NO_CERTIFICATE_CHECK to ignore the
   # server's TLS certificate.
   if [ -n "${_SENTRY_NO_CERTIFICATE_CHECK+1}" ] ; then
@@ -188,6 +195,7 @@ sentry_event () {
     },
     '$breadcrumbs'
     "extra": '$(_sentry_environment_variables)',
+    "release": "'"$revision"'",
     "sdk": {
       "name": "sentry-bash",
       "version": "0.2"
