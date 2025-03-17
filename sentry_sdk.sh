@@ -112,7 +112,7 @@ _sentry_environment_variables() {
 # sentry_message(title, message, severity)
 # Relay to sentry_event().
 sentry_message () {
-  title=$1
+  #title=$1
   message=$2
   severity=$3
   sentry_event "${message}" "${severity}"
@@ -229,7 +229,7 @@ EOF
     # Contact Sentry API and submit the message
     curl --silent --data "$data" \
       $curl_opts \
-      --header "X-Sentry-Auth: Sentry sentry_version=7, sentry_key=$_SENTRY_KEY, sentry_client=zenithal-bash/0.2" \
+      --header "X-Sentry-Auth: Sentry sentry_version=7, sentry_key=$_SENTRY_KEY, sentry_client=zenithal-bash/0.3" \
       https://"$_SENTRY_HOST"/api/"$_SENTRY_PROJECT"/envelope/
   else
     echo "Error: Invalid JSON format"
