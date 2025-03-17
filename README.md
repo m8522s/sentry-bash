@@ -31,9 +31,10 @@ Generate a message that will show up in Sentry.
 sentry_event "Oops, something went wrong!" "error"
 ```
 
-Add breadcrumbs about Git hash and message.
+Add breadcrumbs about Git hash, message, and author.
 
 ```bash
 sentry_breadcrumb "$(git rev-parse HEAD)" "git hash"
 sentry_breadcrumb "$(git show -s --format=%s)" "git message"
+sentry_breadcrumb "$(git show -s --format='%an' $(git rev-parse HEAD))" "git author"
 ```
