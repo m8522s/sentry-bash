@@ -142,7 +142,9 @@ sentry_event () {
   fi
 
   # Find the Git hash
-  if git rev-parse HEAD >/dev/null ; then
+  if [ -n "${SENTRY_RELEASE}" ]; then
+    revision="${SENTRY_RELEASE}"
+  elif git rev-parse HEAD >/dev/null 2>&1 ; then
     revision="Git hash: $(git rev-parse HEAD)"
   else
     revision='unknown'
